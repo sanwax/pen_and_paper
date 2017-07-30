@@ -5,12 +5,12 @@
 #include <QtWebSockets/QWebSocketServer>
 
 
-class Socket : public QObject
+class Server : public QObject
 {
 		Q_OBJECT
 
 	public:
-		Socket(uint16_t port);
+		Server(uint16_t port);
 
 
 	signals:
@@ -18,6 +18,7 @@ class Socket : public QObject
 
 
 	private	slots:
+		//slots of the socket server
 		void acceptError(QAbstractSocket::SocketError socketError);
 
 		void closed();
@@ -34,7 +35,25 @@ class Socket : public QObject
 
 		void sslErrors(const QList <QSslError> &errors);
 
+
+		//slots of any web socket
+		void socketAboutToClose();
+		void socketBinaryFrameReceived(const QByteArray &frame, bool isLastFrame);
+		void socketBinaryMessageReceived(const QByteArray &message);
+		void socketBytesWritten(qint64 bytes);
+		void socketConnected();
+		void socketDisconnected();
+		void socketError(QAbstractSocket::SocketError error);
+		void socketPong(quint64 elapsedTime, const QByteArray &payload);
+		void socketPreSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authenticator);
+		void socketProxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
+		void socketReadChannelFinished();
+		void socketSslErrors(const QList<QSslError> &errors);
+		void socketStateChanged(QAbstractSocket::SocketState state);
+		void socketTextFrameReceived(const QString &frame, bool isLastFrame);
+		void socketTextMessageReceived(const QString &message);
+
 	private:
-		QWebSocketServer *mpServer;
+		QWebSocketServer *mpSocket;
 		QList<QWebSocket*> mClientList;
 };
