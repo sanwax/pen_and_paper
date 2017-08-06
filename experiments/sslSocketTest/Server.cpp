@@ -2,6 +2,7 @@
 #include "Server.h"
 #include "Helper.h"
 #include <QtCore/QDebug>
+#include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QAuthenticator>
 #include <QtNetwork/QAbstractSocket>
 #include <QtWebSockets/QWebSocket>
@@ -9,10 +10,18 @@
 #include <QtNetwork/QSslPreSharedKeyAuthenticator>
 
 
-Server::Server(uint16_t port)
+Server::Server(const QSslCertificate& cert,const QSslKey& key, uint16_t port)
 {
 	//setup server
-	mpListenSocket = new QWebSocketServer(QStringLiteral("Test Server"), QWebSocketServer::NonSecureMode, this);
+	mpListenSocket = new QWebSocketServer(QStringLiteral("Test Server"), QWebSocketServer::SecureMode, this);
+	mpListenSocket->setServerName("My Server Name");
+	auto sslConfig=mpListenSocket->sslConfiguration();
+	sslConfig.setPreSharedKeyIdentityHint("PSK Identity Hint");
+	sslConfig.setProtocol(QSsl::SecureProtocols);
+	sslConfig.setLocalCertificate(cert);
+	sslConfig.setPrivateKey(key);
+	sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);  //no peer certificate required - encrypted but untrusted
+	mpListenSocket->setSslConfiguration(sslConfig);
 	//setup signals & slots
 	QObject::connect(mpListenSocket, &QWebSocketServer::acceptError, this, &Server::acceptError);
 	QObject::connect(mpListenSocket, &QWebSocketServer::closed, this, &Server::closed);
@@ -23,9 +32,8 @@ Server::Server(uint16_t port)
 	QObject::connect(mpListenSocket, &QWebSocketServer::serverError, this, &Server::serverError);
 	QObject::connect(mpListenSocket, &QWebSocketServer::sslErrors, this, &Server::sslErrors);
 	//start listen server
-	qDebug() << "[SERVER] Start listening on port " << port;
 	auto res = mpListenSocket->listen(QHostAddress::Any, port);
-	qDebug() << "[SERVER] Listener started with " << res;
+	qDebug() << "[SERVER] Server URL = " << mpListenSocket->serverUrl();
 	assert(res);
 }
 
@@ -70,14 +78,14 @@ Server::newConnection()
 void
 Server::originAuthenticationRequired(QWebSocketCorsAuthenticator *authenticator)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " authenticator = "<<authenticator;
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " authenticator = " << authenticator;
 }
 
 
 void
 Server::peerVerifyError(const QSslError &error)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " sslError = "<<error;
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " sslError = " << error;
 }
 
 
@@ -91,7 +99,7 @@ Server::preSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authen
 void
 Server::serverError(QWebSocketProtocol::CloseCode closeCode)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " closeCode = "<<closeCode;
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " closeCode = " << closeCode;
 }
 
 
@@ -119,14 +127,14 @@ Server::clientBinaryFrameReceived(const QByteArray &frame, bool isLastFrame)
 void
 Server::clientBinaryMessageReceived(const QByteArray &message)
 {
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " message = "<<message;
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " message = " << message;
 }
 
 
 void
 Server::clientBytesWritten(qint64 bytes)
 {
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " bytes = "<<bytes;
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " bytes = " << bytes;
 }
 
 
@@ -204,7 +212,7 @@ void
 Server::clientTextMessageReceived(const QString &message)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " message = " << message;
-	QWebSocket* pClient=dynamic_cast<QWebSocket*>(sender());
+	QWebSocket *pClient = dynamic_cast<QWebSocket *>(sender());
 	Q_ASSERT(pClient);
 	if (pClient)
 	{

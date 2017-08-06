@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <QtCore/QObject>
+#include <QtNetwork/QSslCertificate>
 #include <QtWebSockets/QWebSocketServer>
 
 
@@ -10,7 +11,7 @@ class Server : public QObject
 		Q_OBJECT
 
 	public:
-		Server(uint16_t port);
+		Server(const QSslCertificate& cert,const QSslKey& key, uint16_t port);
 
 
 	signals:

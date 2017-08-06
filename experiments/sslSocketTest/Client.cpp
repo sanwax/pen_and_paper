@@ -33,8 +33,8 @@ Client::Client(QString sHost, uint16_t port)
 	QObject::connect(mpSocket, &QWebSocket::textFrameReceived, this, &Client::textFrameReceived);
 	QObject::connect(mpSocket, &QWebSocket::textMessageReceived, this, &Client::textMessageReceived);
 	//open socket
-	auto url=QUrl(QString("ws://%1:%2").arg(sHost).arg(port));
-	qDebug()<<"[SOCKET "<<mpSocket<<"] Opening "<<url;
+	auto url = QUrl(QString("wss://%1:%2").arg(sHost).arg(port));
+	qDebug() << "[SOCKET " << mpSocket << "] Opening " << url;
 	mpSocket->open(url);
 }
 
@@ -60,7 +60,7 @@ void Client::binaryMessageReceived(const QByteArray &message)
 
 void Client::bytesWritten(qint64 bytes)
 {
-	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ <<" bytes="<<bytes;
+	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ << " bytes=" << bytes;
 }
 
 
@@ -68,7 +68,7 @@ void Client::connected()
 {
 	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__;
 	std::this_thread::sleep_for(1s);
-	qDebug()<<"[SOCKET "<<mpSocket<<"] Sending ping ... ";
+	qDebug() << "[SOCKET " << mpSocket << "] Sending ping ... ";
 	mpSocket->ping(QByteArray("<<<ping>>>"));
 }
 
@@ -87,16 +87,17 @@ void Client::error(QAbstractSocket::SocketError error)
 
 void Client::pong(quint64 elapsedTime, const QByteArray &payload)
 {
-	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ << " elapsedTime = "<<elapsedTime<<" payload = "<<payload;
+	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ << " elapsedTime = " << elapsedTime << " payload = " << payload;
 	std::this_thread::sleep_for(1s);
-	qDebug()<<"[SOCKET "<<mpSocket<<"] Sending ping ... ";
+	qDebug() << "[SOCKET " << mpSocket << "] Sending ping ... ";
 	mpSocket->sendTextMessage("Hello World");
 }
 
 
 void Client::preSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authenticator)
 {
-	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__;
+	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ << "authenticator = " << authenticator;
+	qDebug() << "[SOCKET " << mpSocket << "] PSK: Identity = " << authenticator->identity() << " hint=" << authenticator->identityHint();
 }
 
 
@@ -115,12 +116,18 @@ void Client::readChannelFinished()
 void Client::sslErrors(const QList<QSslError> &errors)
 {
 	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__;
+	int i=1;
+	for (auto err:errors)
+	{
+		qDebug()<<"[SOCKET "<<mpSocket<<"] Error #"<<i<<": "<<err.errorString();
+		++i;
+	}
 }
 
 
 void Client::stateChanged(QAbstractSocket::SocketState state)
 {
-	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__<<" state = "<<state;
+	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ << " state = " << state;
 }
 
 
@@ -132,8 +139,8 @@ void Client::textFrameReceived(const QString &frame, bool isLastFrame)
 
 void Client::textMessageReceived(const QString &message)
 {
-	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ <<" message = "<<message;
+	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__ << " message = " << message;
 	std::this_thread::sleep_for(1s);
-	qDebug()<<"[SOCKET "<<mpSocket<<"] Closing connection";
-	mpSocket->close(QWebSocketProtocol::CloseCodeGoingAway,"Closing connection after message reception.");
+	qDebug() << "[SOCKET " << mpSocket << "] Closing connection";
+	mpSocket->close(QWebSocketProtocol::CloseCodeGoingAway, "Closing connection after message reception.");
 }
