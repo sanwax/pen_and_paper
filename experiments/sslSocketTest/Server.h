@@ -37,23 +37,23 @@ class Server : public QObject
 
 
 		//slots of any web socket
-		void socketAboutToClose();
-		void socketBinaryFrameReceived(const QByteArray &frame, bool isLastFrame);
-		void socketBinaryMessageReceived(const QByteArray &message);
-		void socketBytesWritten(qint64 bytes);
-		void socketConnected();
-		void socketDisconnected();
-		void socketError(QAbstractSocket::SocketError error);
-		void socketPong(quint64 elapsedTime, const QByteArray &payload);
-		void socketPreSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authenticator);
-		void socketProxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
-		void socketReadChannelFinished();
-		void socketSslErrors(const QList<QSslError> &errors);
-		void socketStateChanged(QAbstractSocket::SocketState state);
-		void socketTextFrameReceived(const QString &frame, bool isLastFrame);
-		void socketTextMessageReceived(const QString &message);
+		void clientAboutToClose();
+		void clientBinaryFrameReceived(const QByteArray &frame, bool isLastFrame);
+		void clientBinaryMessageReceived(const QByteArray &message);
+		void clientBytesWritten(qint64 bytes);
+		void clientConnected();
+		void clientDisconnected();
+		void clientError(QAbstractSocket::SocketError error);
+		void clientPong(quint64 elapsedTime, const QByteArray &payload);
+		void clientPreSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authenticator);
+		void clientProxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator);
+		void clientReadChannelFinished();
+		void clientSslErrors(const QList<QSslError> &errors);
+		void clientStateChanged(QAbstractSocket::SocketState state);
+		void clientTextFrameReceived(const QString &frame, bool isLastFrame);
+		void clientTextMessageReceived(const QString &message);
 
 	private:
-		QWebSocketServer *mpSocket;
+		QWebSocketServer *mpListenSocket;
 		QList<QWebSocket*> mClientList;
 };

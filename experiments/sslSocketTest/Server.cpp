@@ -1,5 +1,6 @@
 #include <cassert>
 #include "Server.h"
+#include "Helper.h"
 #include <QtCore/QDebug>
 #include <QtNetwork/QAuthenticator>
 #include <QtNetwork/QAbstractSocket>
@@ -11,26 +12,27 @@
 Server::Server(uint16_t port)
 {
 	//setup server
-	mpSocket = new QWebSocketServer(QStringLiteral("Test Server"), QWebSocketServer::SecureMode, this);
+	mpListenSocket = new QWebSocketServer(QStringLiteral("Test Server"), QWebSocketServer::NonSecureMode, this);
 	//setup signals & slots
-	QObject::connect(mpSocket, &QWebSocketServer::acceptError, this, &Server::acceptError);
-	QObject::connect(mpSocket, &QWebSocketServer::closed, this, &Server::closed);
-	QObject::connect(mpSocket, &QWebSocketServer::newConnection, this, &Server::newConnection);
-	QObject::connect(mpSocket, &QWebSocketServer::originAuthenticationRequired, this, &Server::originAuthenticationRequired);
-	QObject::connect(mpSocket, &QWebSocketServer::peerVerifyError, this, &Server::peerVerifyError);
-	QObject::connect(mpSocket, &QWebSocketServer::preSharedKeyAuthenticationRequired, this, &Server::preSharedKeyAuthenticationRequired);
-	QObject::connect(mpSocket, &QWebSocketServer::serverError, this, &Server::serverError);
-	QObject::connect(mpSocket, &QWebSocketServer::sslErrors, this, &Server::sslErrors);
+	QObject::connect(mpListenSocket, &QWebSocketServer::acceptError, this, &Server::acceptError);
+	QObject::connect(mpListenSocket, &QWebSocketServer::closed, this, &Server::closed);
+	QObject::connect(mpListenSocket, &QWebSocketServer::newConnection, this, &Server::newConnection);
+	QObject::connect(mpListenSocket, &QWebSocketServer::originAuthenticationRequired, this, &Server::originAuthenticationRequired);
+	QObject::connect(mpListenSocket, &QWebSocketServer::peerVerifyError, this, &Server::peerVerifyError);
+	QObject::connect(mpListenSocket, &QWebSocketServer::preSharedKeyAuthenticationRequired, this, &Server::preSharedKeyAuthenticationRequired);
+	QObject::connect(mpListenSocket, &QWebSocketServer::serverError, this, &Server::serverError);
+	QObject::connect(mpListenSocket, &QWebSocketServer::sslErrors, this, &Server::sslErrors);
 	//start listen server
-	qDebug() << "Start listening on port " << port;
-	auto res = mpSocket->listen(QHostAddress::Any, port);
+	qDebug() << "[SERVER] Start listening on port " << port;
+	auto res = mpListenSocket->listen(QHostAddress::Any, port);
+	qDebug() << "[SERVER] Listener started with " << res;
 	assert(res);
 }
 
 void
 Server::acceptError(QAbstractSocket::SocketError socketError)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << "(" << socketError << ")";
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " socketError = " << stringify(socketError);
 }
 
 void
@@ -44,38 +46,38 @@ void
 Server::newConnection()
 {
 	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__;
-	QWebSocket *pSock = mpSocket->nextPendingConnection();
+	QWebSocket *pClientSocket = mpListenSocket->nextPendingConnection();
 	//connect signals & slots
-	QObject::connect(pSock,&QWebSocket::aboutToClose,this,&Server::socketAboutToClose);
-	QObject::connect(pSock,&QWebSocket::binaryFrameReceived,this,&Server::socketBinaryFrameReceived);
-	QObject::connect(pSock,&QWebSocket::binaryMessageReceived,this,&Server::socketBinaryMessageReceived);
-	QObject::connect(pSock,&QWebSocket::bytesWritten,this,&Server::socketBytesWritten);
-	QObject::connect(pSock,&QWebSocket::connected,this,&Server::socketConnected);
-	QObject::connect(pSock,&QWebSocket::disconnected,this,&Server::socketDisconnected);
-	QObject::connect(pSock,static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),this,&Server::socketError);
-	QObject::connect(pSock,&QWebSocket::pong,this,&Server::socketPong);
-	QObject::connect(pSock,&QWebSocket::preSharedKeyAuthenticationRequired,this,&Server::socketPreSharedKeyAuthenticationRequired);
-	QObject::connect(pSock,&QWebSocket::proxyAuthenticationRequired,this,&Server::socketProxyAuthenticationRequired);
-	QObject::connect(pSock,&QWebSocket::readChannelFinished,this,&Server::socketReadChannelFinished);
-	QObject::connect(pSock,&QWebSocket::sslErrors,this,&Server::socketSslErrors);
-	QObject::connect(pSock,&QWebSocket::stateChanged,this,&Server::socketStateChanged);
-	QObject::connect(pSock,&QWebSocket::textFrameReceived,this,&Server::socketTextFrameReceived);
-	QObject::connect(pSock,&QWebSocket::textMessageReceived,this,&Server::socketTextMessageReceived);
+	QObject::connect(pClientSocket, &QWebSocket::aboutToClose, this, &Server::clientAboutToClose);
+	QObject::connect(pClientSocket, &QWebSocket::binaryFrameReceived, this, &Server::clientBinaryFrameReceived);
+	QObject::connect(pClientSocket, &QWebSocket::binaryMessageReceived, this, &Server::clientBinaryMessageReceived);
+	QObject::connect(pClientSocket, &QWebSocket::bytesWritten, this, &Server::clientBytesWritten);
+	QObject::connect(pClientSocket, &QWebSocket::connected, this, &Server::clientConnected);
+	QObject::connect(pClientSocket, &QWebSocket::disconnected, this, &Server::clientDisconnected);
+	QObject::connect(pClientSocket, static_cast<void (QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error), this, &Server::clientError);
+	QObject::connect(pClientSocket, &QWebSocket::pong, this, &Server::clientPong);
+	QObject::connect(pClientSocket, &QWebSocket::preSharedKeyAuthenticationRequired, this, &Server::clientPreSharedKeyAuthenticationRequired);
+	QObject::connect(pClientSocket, &QWebSocket::proxyAuthenticationRequired, this, &Server::clientProxyAuthenticationRequired);
+	QObject::connect(pClientSocket, &QWebSocket::readChannelFinished, this, &Server::clientReadChannelFinished);
+	QObject::connect(pClientSocket, &QWebSocket::sslErrors, this, &Server::clientSslErrors);
+	QObject::connect(pClientSocket, &QWebSocket::stateChanged, this, &Server::clientStateChanged);
+	QObject::connect(pClientSocket, &QWebSocket::textFrameReceived, this, &Server::clientTextFrameReceived);
+	QObject::connect(pClientSocket, &QWebSocket::textMessageReceived, this, &Server::clientTextMessageReceived);
 	//enlist socket
-	mClientList << pSock;
+	mClientList << pClientSocket;
 }
 
 void
 Server::originAuthenticationRequired(QWebSocketCorsAuthenticator *authenticator)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__;
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " authenticator = "<<authenticator;
 }
 
 
 void
 Server::peerVerifyError(const QSslError &error)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__;
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " sslError = "<<error;
 }
 
 
@@ -89,7 +91,7 @@ Server::preSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authen
 void
 Server::serverError(QWebSocketProtocol::CloseCode closeCode)
 {
-	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__;
+	qDebug() << "[SERVER] Passing " << __PRETTY_FUNCTION__ << " closeCode = "<<closeCode;
 }
 
 
@@ -101,106 +103,112 @@ Server::sslErrors(const QList<QSslError> &errors)
 
 
 void
-Server::socketAboutToClose()
+Server::clientAboutToClose()
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketBinaryFrameReceived(const QByteArray &frame, bool isLastFrame)
+Server::clientBinaryFrameReceived(const QByteArray &frame, bool isLastFrame)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketBinaryMessageReceived(const QByteArray &message)
+Server::clientBinaryMessageReceived(const QByteArray &message)
+{
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " message = "<<message;
+}
+
+
+void
+Server::clientBytesWritten(qint64 bytes)
+{
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " bytes = "<<bytes;
+}
+
+
+void
+Server::clientConnected()
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketBytesWritten(qint64 bytes)
+Server::clientDisconnected()
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketConnected()
+Server::clientError(QAbstractSocket::SocketError error)
+{
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " error = " << stringify(error);
+}
+
+
+void
+Server::clientPong(quint64 elapsedTime, const QByteArray &payload)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketDisconnected()
+Server::clientPreSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authenticator)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketError(QAbstractSocket::SocketError error)
+Server::clientProxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketPong(quint64 elapsedTime, const QByteArray &payload)
+Server::clientReadChannelFinished()
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketPreSharedKeyAuthenticationRequired(QSslPreSharedKeyAuthenticator *authenticator)
+Server::clientSslErrors(const QList<QSslError> &errors)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketProxyAuthenticationRequired(const QNetworkProxy &proxy, QAuthenticator *authenticator)
+Server::clientStateChanged(QAbstractSocket::SocketState state)
+{
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " state = " << state;
+}
+
+
+void
+Server::clientTextFrameReceived(const QString &frame, bool isLastFrame)
 {
 	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
 }
 
 
 void
-Server::socketReadChannelFinished()
+Server::clientTextMessageReceived(const QString &message)
 {
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
-}
-
-
-void
-Server::socketSslErrors(const QList<QSslError> &errors)
-{
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
-}
-
-
-void
-Server::socketStateChanged(QAbstractSocket::SocketState state)
-{
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
-}
-
-
-void
-Server::socketTextFrameReceived(const QString &frame, bool isLastFrame)
-{
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
-}
-
-
-void
-Server::socketTextMessageReceived(const QString &message)
-{
-	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__;
+	qDebug() << "[SOCKET " << sender() << "] Passing " << __PRETTY_FUNCTION__ << " message = " << message;
+	QWebSocket* pClient=dynamic_cast<QWebSocket*>(sender());
+	Q_ASSERT(pClient);
+	if (pClient)
+	{
+		pClient->sendTextMessage("Hello Moon");
+	}
 }
 
