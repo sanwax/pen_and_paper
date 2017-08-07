@@ -32,6 +32,13 @@ class Client : public QObject
 		void textFrameReceived(const QString &frame, bool isLastFrame);
 		void textMessageReceived(const QString &message);
 
+		void
+		connectServer();
+
 	private:
+
 		QWebSocket* mpSocket=nullptr;
+		QUrl mUrl;
+		int miConnectionAttempts=0;
+		const int miMaxConnectionAttempts=2;
 };

@@ -2,6 +2,7 @@
 // Created by mayday on 30.07.17.
 //
 
+#include <QtCore/QTimer>
 #include <thread>
 #include <chrono>
 #include "Client.h"
@@ -16,6 +17,8 @@ Client::Client(QString sHost, uint16_t port)
 {
 	//setup socket
 	mpSocket = new QWebSocket();
+	//declare socket url
+	mUrl = QUrl(QString("wss://%1:%2").arg(sHost).arg(port));
 	//connect signals & slots
 	QObject::connect(mpSocket, &QWebSocket::aboutToClose, this, &Client::aboutToClose);
 	QObject::connect(mpSocket, &QWebSocket::binaryFrameReceived, this, &Client::binaryFrameReceived);
@@ -32,10 +35,23 @@ Client::Client(QString sHost, uint16_t port)
 	QObject::connect(mpSocket, &QWebSocket::stateChanged, this, &Client::stateChanged);
 	QObject::connect(mpSocket, &QWebSocket::textFrameReceived, this, &Client::textFrameReceived);
 	QObject::connect(mpSocket, &QWebSocket::textMessageReceived, this, &Client::textMessageReceived);
-	//open socket
-	auto url = QUrl(QString("wss://%1:%2").arg(sHost).arg(port));
-	qDebug() << "[SOCKET " << mpSocket << "] Opening " << url;
-	mpSocket->open(url);
+	QTimer::singleShot(1,this,SLOT(connectServer()));
+}
+
+void
+Client::connectServer()
+{
+	std::this_thread::sleep_for(1s);
+	miConnectionAttempts+=1;
+	if (miConnectionAttempts>miMaxConnectionAttempts)
+	{
+		qDebug()<<"[SOCKET "<< mpSocket <<"] No more connection attempts.";
+		return;
+	}
+	//try connect....
+	qDebug() << "[SOCKET " << mpSocket << "] Opening " << mUrl << " attempt "<<miConnectionAttempts;
+	qDebug() << "[SOCKET " << mpSocket << "] "<<mpSocket->sslConfiguration().caCertificates().length()<<" CA certs defined.";
+	mpSocket->open(mUrl);
 }
 
 
@@ -116,12 +132,24 @@ void Client::readChannelFinished()
 void Client::sslErrors(const QList<QSslError> &errors)
 {
 	qDebug() << "[SOCKET " << mpSocket << "] Passing " << __PRETTY_FUNCTION__;
+	//fetch ssl configuration
+	QSslConfiguration sslConfig=mpSocket->sslConfiguration();
+	QList<QSslCertificate> caCerts=sslConfig.caCertificates();
+	//walk errors
 	int i=1;
 	for (auto err:errors)
 	{
 		qDebug()<<"[SOCKET "<<mpSocket<<"] Error #"<<i<<": "<<err.errorString();
+		qDebug()<<"[SOCKET "<<mpSocket<<"] Certificate CN: "<<err.certificate().subjectInfo(QSslCertificate::CommonName);
 		++i;
+		//assume user accepts certificate
+		caCerts.append(err.certificate());
 	}
+	//change set of ca certficates
+	sslConfig.setCaCertificates(caCerts);
+	mpSocket->setSslConfiguration(sslConfig);
+	//retry
+	QTimer::singleShot(1,this,SLOT(connectServer()));
 }
 
 
