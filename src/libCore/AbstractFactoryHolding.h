@@ -59,7 +59,7 @@ namespace core
 				//add keys to Production map
 				for (auto key:pFactory->capabilities())
 				{
-					if (mProductionMap.find(key) != mProductionMap.end())
+					if (mProductionMap.find(key) == mProductionMap.end())
 					{
 						mProductionMap.insert(std::make_pair(key, pFactory));
 					}
@@ -101,7 +101,8 @@ namespace core
 				std::unordered_set<KEY> res;
 				for (auto factory:mFactorySet)
 				{
-					res |= factory->capabilities();
+					auto keys = factory->capabilities();
+					res.insert(keys.begin(), keys.end());
 				}
 				return res;
 			}
