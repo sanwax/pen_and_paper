@@ -3,8 +3,8 @@ IF (HAVE_GTEST)
   SET(SOURCES
     main.cpp)
 
-  ADD_EXECUTABLE(unittest ${SOURCES})
-  TARGET_LINK_LIBRARIES(unittest Core.gtest)
-  TARGET_LINK_LIBRARIES(unittest ${LIB_GTEST})
+  ADD_EXECUTABLE(allUnitTests ${SOURCES})
+  TARGET_LINK_LIBRARIES(allUnitTests Core.gtest)
+  TARGET_LINK_LIBRARIES(allUnitTests ${LIB_GTEST})
 
 ENDIF()
