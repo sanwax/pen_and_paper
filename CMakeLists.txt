@@ -17,6 +17,28 @@ ELSE()
 	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 ENDIF()
 
+##
+## Locate google test library
+##
+FIND_LIBRARY(__HAVE_GTEST_LIB NAME gtest PATH_SUFFIXES gtest)
+IF (__HAVE_GTEST_LIB-NOTFOUND)
+	MESSAGE(AUTHOR_WARNING "[CMAKE] Google test library not found - tests will be unavailable.")
+ENDIF()
+FIND_FILE(__HAVE_GTEST_INC NAME gtest.h PATH_SUFFIXES gtest)
+IF (__HAVE_GTEST_INC-NOTFOUND)
+	MESSAGE(AUTHOR_WARNING "[CMAKE] Google test library header not found - tests will be unavailable.")
+ELSE()
+	GET_FILENAME_COMPONENT(__GTEST_PATH ${__HAVE_GTEST_INC} PATH)
+	INCLUDE_DIRECTORIES(${__GTEST_PATH})
+ENDIF()
+IF (NOT (__HAVE_GTEST_LIB-NOTFOUND AND __HAVE_GTEST_INC-NOTFOUND))
+	SET(HAVE_GTEST 1)
+	SET(LIB_GTEST ${__HAVE_GTEST_LIB})
+ELSE()
+	SET(HAVE_GTEST 0)
+	SET(LIB_GTEST "n/a")
+ENDIF()
+
 
 ##
 ## Qt5 is mandatory
@@ -27,6 +49,7 @@ IF    (NOT Qt5_FOUND)
 ENDIF (NOT Qt5_FOUND)
 
 
+MESSAGE("[CMAKE] --------------------------------------------------------------------")
 ##
 ## Filter Qt include directories so that Qt sublibraries are not included (e.g. /usr/include/qt
 ## but not /usr/include/qt/QtCore)
@@ -38,6 +61,8 @@ FOREACH (__arg ${Qt5Core_INCLUDE_DIRS})
 		INCLUDE_DIRECTORIES(${__arg})
 	ENDIF()
 ENDFOREACH()
+MESSAGE("[CMAKE] HAVE_GTEST = " ${HAVE_GTEST} "   ( " ${LIB_GTEST} " )")
+MESSAGE("[CMAKE] --------------------------------------------------------------------")
 
 
 ##
@@ -51,3 +76,4 @@ INCLUDE_DIRECTORIES(src)
 ##
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(experiments)
+ADD_SUBDIRECTORY(tests)

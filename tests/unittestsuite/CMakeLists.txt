@@ -1,0 +1,10 @@
+IF (HAVE_GTEST)
+
+  SET(SOURCES
+    main.cpp)
+
+  ADD_EXECUTABLE(unittest ${SOURCES})
+  TARGET_LINK_LIBRARIES(unittest Core.gtest)
+  TARGET_LINK_LIBRARIES(unittest ${LIB_GTEST})
+
+ENDIF()
