@@ -6,7 +6,6 @@ namespace core
 	namespace test
 	{
 
-
 		void init()
 		{
 			static int i = 0;
@@ -61,12 +60,6 @@ namespace core
 					return {0, 1, 2, 3, 4};
 				}
 		};
-
-
-		TEST(core_FactoryHolding, TriggerTest)
-		{
-			EXPECT_EQ(1, 1) << "Must work!";
-		}
 
 
 		TEST(core_FactoryHolding, EmptyHolding)
