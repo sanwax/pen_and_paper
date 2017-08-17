@@ -5,7 +5,7 @@
  *      Author: mayday
  */
 
-#include <libCore/dds/TopicSwitch.h>
+#include <libDDS/TopicSwitch.h>
 
 namespace core {
 namespace dds {
