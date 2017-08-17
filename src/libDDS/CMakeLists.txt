@@ -7,7 +7,13 @@ SET(SOURCES
 	DataWriter.cpp
 	DataReader.h
 	DataReader.cpp
+	Exception.h
+	ExceptionUnimplemented.h
+	TopicExchange.h
+	TopicExchange.cpp
 	stl/convenience.h
+	topics/TopicSubscription.h
+	topics/TopicSubscription.cpp
 	)
 
 ADD_LIBRARY(DDS SHARED ${SOURCES})
