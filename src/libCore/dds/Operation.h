@@ -2,15 +2,15 @@
 
 namespace core
 {
-  namespace dds
-  {
+	namespace dds
+	{
 
-    enum class Operation
-    {
-      INSERT=0,
-      UPDATE=1,
-      DELETE=2
-    };
+		enum class Operation
+		{
+			INSERT=1,
+			UPDATE=2,
+			DELETE=3
+		};
 
-  }
+	}
 }
