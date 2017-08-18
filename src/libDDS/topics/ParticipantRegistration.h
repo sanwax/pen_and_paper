@@ -2,21 +2,34 @@
 
 
 #include <libDDS/AbstractTopic.h>
+#include <libDDS/AbstractParticipant.h>
 
 
 namespace dds
 {
+	class AbstractParticipant;
+
 
 	namespace topics
 	{
-
-		class TopicSubscription : public dds::AbstractTopic
+		/**
+		 * @brief Topic where DDS participants are identified
+		 */
+		class ParticipantRegistration : public dds::AbstractTopic
 		{
 			public:
 				/**
 				 * @brief Constructor
 				 */
-				TopicSubscription() = default;
+				ParticipantRegistration() = default;
+
+
+				/**
+				 * @brief Destructor
+				 */
+				virtual
+				~ParticipantRegistration() = default;
+
 
 				/**
 				 * @brief Topics have types
@@ -54,8 +67,17 @@ namespace dds
 				deserialize(std::shared_ptr<const dds::SerializationContainer> pContainer);
 
 
+				/**
+				 * @brief Update payload from AbstractParticipant class
+				 * @param pParticipant instance where to read payload from
+				 */
+				void
+				set(const dds::AbstractParticipant *pParticipant);
+
+
+				//paydata
+				dds::ParticipantId mParticipantId;   ///< participant by id
+				std::string mParticipantName;        ///< participant by name
 		};
-
 	}
-
 }
