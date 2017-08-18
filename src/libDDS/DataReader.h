@@ -10,7 +10,7 @@ namespace dds
 {
 	
 	class AbstractTopic;
-	class TopicExchange;
+	class AbstractTopicExchange;
 	
 	class DataReader
 	{
@@ -21,7 +21,7 @@ namespace dds
 			 * @brief Constructor
 			 * @param [in] pExchange controller to work with
 			 */
-			DataReader(std::shared_ptr<dds::TopicExchange> pExchange);
+			DataReader(std::shared_ptr<dds::AbstractTopicExchange> pExchange);
 
 			/**
 			 * @brief Destructor
@@ -64,7 +64,7 @@ namespace dds
 			unsubscribe();
 
 		protected:
-			std::shared_ptr<dds::TopicExchange> mpExchange;                  ///< the topic exchange
+			std::shared_ptr<dds::AbstractTopicExchange> mpExchange;                  ///< the topic exchange
 			std::unordered_multimap<dds::TopicType, Callback> mCallbackMap;   ///< mapped callbacks
 	};
 

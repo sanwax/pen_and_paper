@@ -9,8 +9,7 @@ SET(SOURCES
 		DataReader.cpp
 		Exception.h
 		ExceptionUnimplemented.h
-		TopicExchange.h
-		TopicExchange.cpp
+		AbstractTopicExchange.h
 		stl/convenience.h
 		topics/TopicSubscription.h
 		topics/TopicSubscription.cpp
@@ -20,7 +19,8 @@ SET(SOURCES
 		ParticipantId.h
 		AbstractParticipant.h
 		AbstractParticipant.cpp
-		)
+		Participant.cpp
+		Participant.h)
 
 ADD_LIBRARY(DDS SHARED ${SOURCES})
 

@@ -8,7 +8,7 @@ namespace dds
 {
 	
 	class AbstractTopic;
-	class TopicExchange;
+	class AbstractTopicExchange;
 	
 	/**
 	 * @brief Interface to the data distribution system for publishers
@@ -21,7 +21,7 @@ namespace dds
 			 * @param [in] pSwitch a dds switch entity
 			 */
 			explicit
-			DataWriter(std::shared_ptr<dds::TopicExchange> pSwitch);
+			DataWriter(std::shared_ptr<dds::AbstractTopicExchange> pSwitch);
 
 			/**
 			 * @brief Destructor
@@ -65,7 +65,7 @@ namespace dds
 			deleteTopic(const dds::TopicType iType);
 
 		protected:
-			std::shared_ptr<dds::TopicExchange> mpExchange;   ///< switch to communicate with
+			std::shared_ptr<dds::AbstractTopicExchange> mpExchange;   ///< switch to communicate with
 			std::unordered_set<dds::TopicType> mTopicSet;     ///< set of registered topics
 	};
 

@@ -1,13 +1,13 @@
 #include <libDDS/Exception.h>
 #include <libDDS/DataReader.h>
-#include <libDDS/TopicExchange.h>
+#include <libDDS/AbstractTopicExchange.h>
 #include <libDDS/AbstractTopic.h>
 #include <libDDS/stl/convenience.h>
 
 namespace dds
 {
 	
-	DataReader::DataReader(std::shared_ptr<dds::TopicExchange> pExchange) :
+	DataReader::DataReader(std::shared_ptr<dds::AbstractTopicExchange> pExchange) :
 		mpExchange(pExchange), mCallbackMap()
 	{
 		if (!mpExchange)

@@ -1,13 +1,13 @@
 #include <libDDS/AbstractTopic.h>
 #include <libDDS/DataWriter.h>
 #include <libDDS/Exception.h>
-#include <libDDS/TopicExchange.h>
+#include <libDDS/AbstractTopicExchange.h>
 
 namespace dds
 {
 	
 	/*explicit*/
-	DataWriter::DataWriter(std::shared_ptr<dds::TopicExchange> pSwitch) :
+	DataWriter::DataWriter(std::shared_ptr<dds::AbstractTopicExchange> pSwitch) :
 		mpExchange(pSwitch)
 	{
 		if (!mpExchange)
