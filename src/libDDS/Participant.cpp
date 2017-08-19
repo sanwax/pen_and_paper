@@ -1,5 +1,6 @@
 #include <libDDS/Participant.h>
 #include <libDDS/Exception.h>
+#include <libDDS/AbstractTopicExchange.h>
 #include <libDDS/topics/ParticipantRegistration.h>
 
 
@@ -17,10 +18,10 @@ namespace dds
 		{
 			throw dds::Exception("Invalid topic exchange pointer: nullptr");
 		}
-		//register participant
-		auto p=std::make_shared<topics::ParticipantRegistration>();
+		//publish
+		auto p=std::make_unique<topics::ParticipantRegistration>();
 		p->set(this);
-		mpExchange->publish(mId,p);
+		mpExchange->publish(mId,std::move(p));
 	}
 
 
@@ -28,9 +29,9 @@ namespace dds
 	Participant::~Participant()
 	{
 		//unregister participant
-		auto p=std::make_shared<topics::ParticipantRegistration>();
+		auto p=std::make_unique<topics::ParticipantRegistration>();
 		p->set(this);
-		mpExchange->unpublish(mId,p,true);
+		mpExchange->unpublish(mId,std::move(p));
 	}
 
 }

@@ -10,6 +10,7 @@
 namespace dds
 {
 	class AbstractTopic;
+	class AbstractParticipant;
 
 
 	/**
@@ -36,54 +37,62 @@ namespace dds
 
 			/**
 			 * @brief Publish a topic
-			 * @param sender topic origin
+			 * @param pSender topic origin
 			 * @param pTopic topic instance
 			 */
 			virtual
 			void
-			publish(const dds::ParticipantId& sender,std::unique_ptr<dds::AbstractTopic> pTopic) = 0;
+			publish(const dds::ParticipantId sender,std::unique_ptr<dds::AbstractTopic> pTopic) = 0;
 
 
 			/**
 			 * @brief Remove topic by type+key
-			 * @param sender sender
+			 * @param pSender sender
 			 * @param pTopic topic (with key) to delete
 			 */
 			virtual
 			void
-			unpublish(const dds::ParticipantId& sender,std::unique_ptr<dds::AbstractTopic> pTopic)  = 0;
+			unpublish(const dds::ParticipantId sender,std::unique_ptr<dds::AbstractTopic> pTopic)  = 0;
 
 
 			/**
 			 * @brief Remove topic by type
-			 * @param sender sender of topic
+			 * @param pSender sender of topic
 			 * @param type identifies the topic
 			 */
 			virtual
 			void
-			unpublish(const dds::ParticipantId& sender,const dds::TopicType type)  = 0;
+			unpublish(const dds::ParticipantId sender,const dds::TopicType type)  = 0;
 
 
 			/**
 			 * @brief Subscribe a topic
-			 * @param receiver receiver participant
+			 * @param pReceiver receiver participant
 			 * @param type topic type
 			 * @param sendExisting send existing topics or just new ones?
 			 * @param pFilter a filter function
 			 */
 			virtual
 			void
-			subscribe(const dds::ParticipantId& receiver,const dds::TopicType type,bool sendExisting,std::unique_ptr<tFilterFunction> pFilter) =0;
+			subscribe(const dds::ParticipantId receiver,const dds::TopicType type,bool sendExisting,std::unique_ptr<tFilterFunction> pFilter) =0;
 
 
 			/**
 			 * @brief Unsubscribe a topic
-			 * @param receiver receiver participant
+			 * @param pReceiver receiver participant
 			 * @param type topic type
 			 */
 			virtual
 			void
-			unsubscribe(const dds::ParticipantId& receiver,const dds::TopicType type) =0;
+			unsubscribe(const dds::ParticipantId receiver,const dds::TopicType type) =0;
+
+			/**
+			 * @brief Unsubscribe a topic
+			 * @param pReceiver receiver participant
+			 */
+			virtual
+			void
+			unsubscribe(const dds::ParticipantId receiver) =0;
 
 	};
 

@@ -24,8 +24,9 @@ namespace dds
 			class DynamicProperties
 			{
 				public:
-					dds::ParticipantId mSender=0;          ///< who published this topic?
-					dds::MonotonicClock mSenderClock=0;    ///< when was the topic published (used to order published topics)
+					dds::ParticipantId mSender{0};          ///< who published this topic?
+					dds::MonotonicClock mSenderClock{0};    ///< when was the topic published (used to order published topics)
+					dds::ParticipantId mSenderExchange{0};  ///< which exchange distributed the topic?
 			};
 
 

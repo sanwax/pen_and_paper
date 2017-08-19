@@ -3,10 +3,10 @@ SET(SOURCES
 		Operation.h
 		AbstractTopic.h
 		TopicType.h
-		DataWriter.h
-		DataWriter.cpp
-		DataReader.h
-		DataReader.cpp
+		#DataWriter.h
+		#DataWriter.cpp
+		#DataReader.h
+		#DataReader.cpp
 		Exception.h
 		ExceptionUnimplemented.h
 		AbstractTopicExchange.h
@@ -20,8 +20,11 @@ SET(SOURCES
 		AbstractParticipant.h
 		AbstractParticipant.cpp
 		Participant.cpp
-		Participant.h)
+		Participant.h
+		TopicExchange.cpp
+		TopicExchange.h)
 
 ADD_LIBRARY(DDS SHARED ${SOURCES})
+TARGET_LINK_LIBRARIES(DDS pthread)
 
 ADD_SUBDIRECTORY(test)
