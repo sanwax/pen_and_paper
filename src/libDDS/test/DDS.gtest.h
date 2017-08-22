@@ -1,12 +1,12 @@
 #pragma once
 
-namespace core
+namespace dds
 {
 	namespace test
 	{
 
 		void
-		testFactoryHolding();
+		testTopicExchange();
 
 	}
 }

@@ -60,6 +60,19 @@ namespace dds
 				return *this;
 			}
 
+
+			/**
+			 * @brief Operator less
+			 * @param rhs a right-hand-side for comparison
+			 * @return this < rhs
+			 */
+			bool
+			operator<(const dds::MonotonicClock& rhs) const noexcept
+			{
+				return mNow.load()<rhs.mNow.load();
+			}
+
+
 		private:
 			std::atomic<uint64_t> mNow;  ///< current time
 	};

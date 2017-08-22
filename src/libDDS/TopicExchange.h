@@ -3,12 +3,12 @@
 
 #include <queue>
 #include <mutex>
-#include <shared_mutex>
+#include <tuple>
 #include <thread>
 #include <atomic>
-#include <unordered_map>
 #include <memory>
-#include <tuple>
+#include <unordered_map>
+#include <condition_variable>
 #include <libDDS/AbstractTopicExchange.h>
 #include <libDDS/MonotonicClock.h>
 #include <libDDS/Operation.h>
@@ -69,10 +69,6 @@ namespace dds
 			unregisterParticipant(const std::shared_ptr<const dds::topics::ParticipantRegistration> pRegistration);
 
 
-			bool
-			participantServed(const dds::ParticipantId id);
-
-
 			std::shared_ptr<const dds::AbstractTopic>
 			finalizeTopic(const dds::ParticipantId &sender, std::unique_ptr<dds::AbstractTopic> &pTopic);
 
@@ -85,15 +81,14 @@ namespace dds
 			const std::string mParticipantName;
 			//Topic Exchange parts
 			dds::MonotonicClock mClock;                                                         ///< a clock
-			std::shared_timed_mutex mParticipantMutex;                                          ///< protects the participant map
+			std::mutex mMutex;                                                                  ///< protects the participant map
 			std::unordered_map<dds::ParticipantId, dds::AbstractParticipant *> mParticipantMap;
-			std::shared_timed_mutex mTopicMutex;                                                ///< protects the big picture and subscription maps
 			std::unordered_map<dds::TopicType, std::unordered_map<std::string, std::shared_ptr<const dds::AbstractTopic>>> mBigPicture;
 			std::unordered_multimap<dds::TopicType, dds::ParticipantId> mSubscriptionMap;
 			std::deque<std::tuple<dds::ParticipantId, std::shared_ptr<const dds::AbstractTopic>, dds::Operation>> mEventQueue;
 			std::condition_variable mQueueChangeEvent;                                          ///< signals changes of the queue
 			std::thread mQueueThread;                                                           ///< a thread that empties the queue
-			bool mbShutdownSignaled{false};                                                     ///< flag: signal the thread to shutdown
+			bool mbShutdownRequested{false};                                                    ///< flag: signal the thread to shutdown
 
 	};
 }

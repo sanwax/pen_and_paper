@@ -1,5 +1,3 @@
-#include <iomanip>
-#include <sstream>
 #include <libDDS/AbstractParticipant.h>
 #include <libDDS/topics/ParticipantRegistration.h>
 #include <libDDS/ExceptionUnimplemented.h>
@@ -53,9 +51,7 @@ namespace dds
 			mParticipantId = pParticipant->id();
 			mParticipantName = pParticipant->name();
 			mpParticipant=pParticipant;
-			std::stringstream s;
-			s << std::hex << std::setfill('0') << std::setw(sizeof(mParticipantId) * 2) << mParticipantId;
-			msKey = s.str();
+			msKey=pParticipant->idAsKeyString(pParticipant->id());
 		}
 
 	}

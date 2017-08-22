@@ -38,6 +38,14 @@ namespace dds
 			dds::ParticipantId
 			id() const noexcept=0;
 
+			/**
+			 * @brief Key value when participant id is used as key
+			 * @return key value
+			 */
+			static
+			std::string
+			idAsKeyString(const dds::ParticipantId id);
+
 
 			/**
 			 * @brief Getter
@@ -55,7 +63,7 @@ namespace dds
 			 */
 			virtual
 			void
-			handleTopicActivity(const std::shared_ptr<const dds::AbstractTopic>& pTopic,const dds::Operation operation) noexcept =0;
+			handleTopicActivity(const std::shared_ptr<const dds::AbstractTopic>& pTopic,const dds::Operation operation) noexcept;
 
 		protected:
 			/**

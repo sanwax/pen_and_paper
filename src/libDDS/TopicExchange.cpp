@@ -10,11 +10,11 @@ namespace dds
 {
 
 	TopicExchange::TopicExchange() :
-			dds::AbstractTopicExchange(),
-			mParticipantId(dds::AbstractParticipant::createParticipantId()),
-			mParticipantName("/dds/TopicExchange"),
-			mClock{1},
-	        mQueueThread(this,&TopicExchange::processQueue)
+		dds::AbstractTopicExchange(),
+		mParticipantId(dds::AbstractParticipant::createParticipantId()),
+		mParticipantName("/dds/TopicExchange"),
+		mClock{1},
+	    mQueueThread(std::bind(&TopicExchange::processQueue,this))
 	{
 	}
 
@@ -23,7 +23,7 @@ namespace dds
 	TopicExchange::~TopicExchange()
 	{
 		//stop queue thread
-		mbShutdownSignaled=true;
+		mbShutdownRequested=true;
 		mQueueChangeEvent.notify_all();
 		mQueueThread.join();
 	}
@@ -61,7 +61,7 @@ namespace dds
 		assert(id != 0);
 		assert(id==pRegistration->mpParticipant->id());
 		//insert into map
-		std::unique_lock<std::shared_timed_mutex> lock(mParticipantMutex);
+		std::unique_lock<std::mutex> lock(mMutex);
 		const auto iter = mParticipantMap.find(id);
 		if (iter == mParticipantMap.end())
 		{
@@ -91,7 +91,7 @@ namespace dds
 		const auto id = pRegistration->mParticipantId;
 		assert(id != 0);
 		//insert into map
-		std::unique_lock<std::shared_timed_mutex> lock(mParticipantMutex);
+		std::unique_lock<std::mutex> lock(mMutex);
 		const auto iter = mParticipantMap.find(id);
 		if (iter != mParticipantMap.end())
 		{
@@ -104,14 +104,6 @@ namespace dds
 				throw Exception("Invalid participant/id pair tries to unregister.");
 			}
 		}
-	}
-
-
-	bool
-	TopicExchange::participantServed(const dds::ParticipantId id)
-	{
-		std::shared_lock<std::shared_timed_mutex> lock(mParticipantMutex);
-		return mParticipantMap.find(id) != mParticipantMap.end();
 	}
 
 
@@ -155,13 +147,13 @@ namespace dds
 		{
 			registerParticipant(std::dynamic_pointer_cast<const dds::topics::ParticipantRegistration>(pSharedTopic));
 		}
+		//enter critical section
+		std::unique_lock<std::mutex> lock(mMutex);
 		//test: sender must be served by us
-		if (!participantServed(sender))
+		if (mParticipantMap.find(sender) == mParticipantMap.end())
 		{
 			throw Exception("Unable to publish topic. Sender unknown.");
 		}
-		//insert topic into big picture
-		std::unique_lock<std::shared_timed_mutex> lock(mTopicMutex);
 		//test if topic is already known
 		const bool bIsNewTopic=mBigPicture.find(topicType)==mBigPicture.end();
 		mBigPicture[topicType][pSharedTopic->key()] = pSharedTopic;
@@ -178,6 +170,7 @@ namespace dds
 				mEventQueue.push_back(std::make_tuple(dst->first, pSharedTopic, dds::Operation::UPDATE));
 			}
 		}
+		mQueueChangeEvent.notify_all();
 	}
 
 	void
@@ -193,18 +186,21 @@ namespace dds
 		//finalize topic
 		const auto pSharedTopic=finalizeTopic(sender,pTopic);
 		const auto topicType = pSharedTopic->type();
+		//enter critical section
+		std::unique_lock<std::mutex> lock(mMutex);
 		//test: if sender is served by this topic exchange
-		if (!participantServed(sender))
+		if (mParticipantMap.find(sender) == mParticipantMap.end())
 		{
 			throw Exception("Unable to unpublish topic. Sender unknown.");
 		}
 		//inspect topic type for dds control topics
 		if (topicType == typeIdParticipantRegistrationTopic)
 		{
+			lock.unlock();
 			unregisterParticipant(std::dynamic_pointer_cast<const dds::topics::ParticipantRegistration>(pSharedTopic));
+			lock.lock();
 		}
 		//remove from big picture;
-		std::unique_lock<std::shared_timed_mutex> lock(mTopicMutex);
 		auto typeIter=mBigPicture.find(topicType);
 		if (typeIter==mBigPicture.end())
 		{
@@ -231,18 +227,20 @@ namespace dds
 		{
 			mEventQueue.push_back(std::make_tuple(dst->first, pSharedTopic, dds::Operation::DELETE));
 		}
+		mQueueChangeEvent.notify_all();
 	}
 
 	void
 	TopicExchange::unpublish(const dds::ParticipantId sender, const dds::TopicType type)
 	{
+		//enter critical section
+		std::unique_lock<std::mutex> lock(mMutex);
 		//test: if sender is served by this topic exchange
-		if (!participantServed(sender))
+		if (mParticipantMap.find(sender) == mParticipantMap.end())
 		{
 			throw Exception("Unable to unpublish topic. Sender unknown.");
 		}
 		//remove from big picture;
-		std::unique_lock<std::shared_timed_mutex> lock(mTopicMutex);
 		auto typeIter=mBigPicture.find(type);
 		if (typeIter==mBigPicture.end())
 		{
@@ -270,6 +268,7 @@ namespace dds
 				++topicIter;
 			}
 		}
+		mQueueChangeEvent.notify_all();
 		//test if last topic removed of that type
 		if (typeIter->second.empty())
 		{
@@ -281,13 +280,14 @@ namespace dds
 	void
 	TopicExchange::subscribe(const dds::ParticipantId receiver, const dds::TopicType type, bool replayExisting)
 	{
+		//enter critical section
+		std::unique_lock<std::mutex> lock(mMutex);
 		//test: if receiver is served by this topic exchange
-		if (!participantServed(receiver))
+		if (mParticipantMap.find(receiver) == mParticipantMap.end())
 		{
 			throw Exception("Unable to subscribe topic. Unregistered receiver.");
 		}
-		//lock subscription map
-		std::unique_lock<std::shared_timed_mutex> lock(mTopicMutex);
+		//subscription map
 		mSubscriptionMap.insert(std::make_pair(receiver,type));
 		//replay existing (if required)
 		if (replayExisting)
@@ -296,10 +296,11 @@ namespace dds
 			const auto typeIter=mBigPicture.find(type);
 			if (typeIter!=mBigPicture.end())
 			{
-				for (auto keyIter=typeIter->second.begin();keyIter!=typeIter->second.begin();keyIter)
+				for (auto keyIter=typeIter->second.begin();keyIter!=typeIter->second.end();++keyIter)
 				{
 					mEventQueue.push_back(std::make_tuple(receiver,keyIter->second, dds::Operation::REPLAY));
 				}
+				mQueueChangeEvent.notify_all();
 			}
 		}
 	}
@@ -307,13 +308,13 @@ namespace dds
 	void
 	TopicExchange::unsubscribe(const dds::ParticipantId receiver, const dds::TopicType type)
 	{
+		//enter critical section
+		std::unique_lock<std::mutex> lock(mMutex);
 		//test: if receiver is served by this topic exchange
-		if (!participantServed(receiver))
+		if (mParticipantMap.find(receiver) == mParticipantMap.end())
 		{
 			throw Exception("Unable to unsubscribe topic. Unregistered receiver.");
 		}
-		//lock subscription map
-		std::unique_lock<std::shared_timed_mutex> lock(mTopicMutex);
 		//remove queue'd events
 		auto queueIter=mEventQueue.begin();
 		while (queueIter!=mEventQueue.end())
@@ -327,6 +328,7 @@ namespace dds
 				++queueIter;
 			}
 		}
+		mQueueChangeEvent.notify_all();
 		//remove subscription
 		const auto iter=stl::findPair(mSubscriptionMap,receiver,type);
 		if (iter!=mSubscriptionMap.end())
@@ -338,13 +340,13 @@ namespace dds
 	void
 	TopicExchange::unsubscribe(const dds::ParticipantId receiver)
 	{
+		//enter critical section
+		std::unique_lock<std::mutex> lock(mMutex);
 		//test: if receiver is served by this topic exchange
-		if (!participantServed(receiver))
+		if (mParticipantMap.find(receiver) == mParticipantMap.end())
 		{
 			throw Exception("Unable to unsubscribe topic. Unregistered receiver.");
 		}
-		//lock subscription map
-		std::unique_lock<std::shared_timed_mutex> lock(mTopicMutex);
 		//remove queue'd events
 		auto queueIter=mEventQueue.begin();
 		while (queueIter!=mEventQueue.end())
@@ -358,6 +360,7 @@ namespace dds
 				++queueIter;
 			}
 		}
+		mQueueChangeEvent.notify_all();
 		//remove subscription
 		mSubscriptionMap.erase(receiver);
 	}
@@ -366,32 +369,31 @@ namespace dds
 	void
 	TopicExchange::processQueue()
 	{
-		while (!mbShutdownSignaled)
+		std::unique_lock<std::mutex> guard(mMutex);
+		while (!mbShutdownRequested)
 		{
 			//fetch next element from the queue
-			std::unique_lock<std::shared_timed_mutex> queueLock(mTopicMutex);
 			if (mEventQueue.empty())
 			{
-				mQueueChangeEvent.wait(queueLock);
-				if (mbShutdownSignaled)
+				mQueueChangeEvent.wait(guard);
+				if (mbShutdownRequested)
 				{
 					return;
 				}
 			}
-			assert(mEventQueue.empty()==false);
-			const auto event=mEventQueue.front();
-			mEventQueue.pop_front();
-			//give up lock and process event
-			queueLock.release();
-			//lock the participators map
-			std::shared_lock<std::shared_timed_mutex> participatorLock(mParticipantMutex);
-			//resolve the receiving participant
-			const auto participantIter=mParticipantMap.find(std::get<0>(event));
-			if (participantIter!=mParticipantMap.end())
+			if (mEventQueue.empty()==false)
 			{
-				participantIter->second->handleTopicActivity(std::get<1>(event),std::get<2>(event));
+				const auto event = mEventQueue.front();
+				mEventQueue.pop_front();
+				//resolve the receiving participant
+				const auto participantIter = mParticipantMap.find(std::get<0>(event));
+				if (participantIter != mParticipantMap.end())
+				{
+					guard.unlock();
+					participantIter->second->handleTopicActivity(std::get<1>(event), std::get<2>(event));
+					guard.lock();
+				}
 			}
-
 		}
 	}
 

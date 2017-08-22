@@ -1,6 +1,8 @@
 #pragma once
 
+
 #include <memory>
+#include <libDDS/TopicType.h>
 #include <libDDS/AbstractParticipant.h>
 
 
@@ -17,7 +19,7 @@ namespace dds
 			 * @param pExchange pointer to associated topic exchange
 			 * @param sName labels the participant with a human readable name
 			 */
-			Participant(std::shared_ptr<dds::AbstractTopicExchange> &pExchange, const std::string &sName);
+			Participant(std::shared_ptr<dds::AbstractTopicExchange> pExchange, const std::string &sName);
 
 
 			/**
@@ -54,9 +56,32 @@ namespace dds
 			 * @param pTopic the topic
 			 * @param operation the activity
 			 */
-			virtual
-			void
-			handleTopicActivity(const std::shared_ptr<const dds::AbstractTopic>& pTopic,const dds::Operation operation) noexcept;
+			virtual void
+			handleTopicActivity(const std::shared_ptr<const dds::AbstractTopic> &pTopic, const dds::Operation operation) noexcept;
+
+
+			/**
+			 * @brief Subscribe
+			 * @param type topic type
+			 * @param replayExisting replay existing topic instances
+			 */
+			virtual void
+			subscribe(const dds::TopicType type, bool replayExisting);
+
+
+			/**
+			 * @brief Unsubscribe a topic by type
+			 * @param type topic type
+			 */
+			virtual void
+			unsubscribe(const dds::TopicType type);
+
+
+			/**
+			 * @brief Unsubscribe from all topics
+			 */
+			virtual void
+			unsubscribe();
 
 
 		protected:

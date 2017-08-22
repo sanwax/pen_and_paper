@@ -6,7 +6,7 @@ namespace core
 	namespace test
 	{
 
-		void init()
+		void testFactoryHolding()
 		{
 			static int i = 0;
 		}

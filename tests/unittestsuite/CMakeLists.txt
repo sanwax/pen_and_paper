@@ -5,6 +5,7 @@ IF (HAVE_GTEST)
 
   ADD_EXECUTABLE(allUnitTests ${SOURCES})
   TARGET_LINK_LIBRARIES(allUnitTests Core.gtest)
+  TARGET_LINK_LIBRARIES(allUnitTests DDS.gtest)
   TARGET_LINK_LIBRARIES(allUnitTests ${LIB_GTEST})
 
 ENDIF()
