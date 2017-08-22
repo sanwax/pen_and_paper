@@ -49,6 +49,16 @@ namespace dds
 			}
 
 
+			/**
+			 * @brief Topic exchange pushes a new topic activity
+			 * @param pTopic the topic
+			 * @param operation the activity
+			 */
+			virtual
+			void
+			handleTopicActivity(const std::shared_ptr<const dds::AbstractTopic>& pTopic,const dds::Operation operation) noexcept;
+
+
 		protected:
 			const dds::ParticipantId mId;                    ///< participant identification
 			const std::string msName;                        ///< name of the participant

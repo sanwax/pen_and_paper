@@ -44,7 +44,7 @@ namespace dds
 
 
 		void
-		ParticipantRegistration::set(const dds::AbstractParticipant *pParticipant)
+		ParticipantRegistration::set(dds::AbstractParticipant *pParticipant)
 		{
 			if (pParticipant == nullptr)
 			{
@@ -52,6 +52,7 @@ namespace dds
 			}
 			mParticipantId = pParticipant->id();
 			mParticipantName = pParticipant->name();
+			mpParticipant=pParticipant;
 			std::stringstream s;
 			s << std::hex << std::setfill('0') << std::setw(sizeof(mParticipantId) * 2) << mParticipantId;
 			msKey = s.str();

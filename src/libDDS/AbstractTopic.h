@@ -114,6 +114,19 @@ namespace dds
 			}
 
 
+			/**
+			 * @brief Resolves a topic type id by a type
+			 * @tparam TOPIC type of topic to resolve
+			 * @return type
+			 */
+			template<typename TOPIC>
+			static
+			dds::TopicType
+			resolveTypeId()
+			{
+				return TOPIC().type();
+			}
+
 		protected:
 			std::string msKey=std::string();                          ///< key value
 			dds::AbstractTopic::DynamicProperties mDynamicProperties; ///< properties package

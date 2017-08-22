@@ -34,4 +34,11 @@ namespace dds
 		mpExchange->unpublish(mId,std::move(p));
 	}
 
+
+	void
+	Participant::handleTopicActivity(const std::shared_ptr<const dds::AbstractTopic>& pTopic,const dds::Operation operation) noexcept
+	{
+		//ignore...
+	}
+
 }

@@ -19,9 +19,6 @@ namespace dds
 	class AbstractTopicExchange:public dds::AbstractParticipant
 	{
 		public:
-			typedef std::function<bool(const std::shared_ptr<dds::AbstractTopic>&,bool)> tFilterFunction;
-
-
 			/**
 			 * @brief Constructor
 			 */
@@ -69,12 +66,11 @@ namespace dds
 			 * @brief Subscribe a topic
 			 * @param pReceiver receiver participant
 			 * @param type topic type
-			 * @param sendExisting send existing topics or just new ones?
-			 * @param pFilter a filter function
+			 * @param replayExisting replay existing topics for late joiners or just new ones?
 			 */
 			virtual
 			void
-			subscribe(const dds::ParticipantId receiver,const dds::TopicType type,bool sendExisting,std::unique_ptr<tFilterFunction> pFilter) =0;
+			subscribe(const dds::ParticipantId receiver,const dds::TopicType type,bool replayExisting) =0;
 
 
 			/**

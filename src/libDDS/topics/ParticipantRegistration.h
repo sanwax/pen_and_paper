@@ -72,12 +72,13 @@ namespace dds
 				 * @param pParticipant instance where to read payload from
 				 */
 				void
-				set(const dds::AbstractParticipant *pParticipant);
+				set(dds::AbstractParticipant *pParticipant);
 
 
 				//paydata
-				dds::ParticipantId mParticipantId;   ///< participant by id
-				std::string mParticipantName;        ///< participant by name
+				dds::ParticipantId mParticipantId=0;             ///< participant by id
+				std::string mParticipantName;                    ///< participant by name
+				dds::AbstractParticipant* mpParticipant=nullptr; ///< stripped by TopicExchange instance which will serve the participant
 		};
 	}
 }
